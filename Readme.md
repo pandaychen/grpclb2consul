@@ -15,7 +15,24 @@
 具体实现的思路如下:
 
 ## 服务注册
-
+grpc-resovler包的Address结构,注意看其中的Metadata,可以在其中放入一些与LB特性相关的数据(如权重等),用于我们实现LB算法
+```
+type Address struct {
+    // Addr is the server address on which a connection will be established.
+    Addr string
+    // Type is the type of this address.
+    Type AddressType
+    // ServerName is the name of this address.
+    //
+    // e.g. if Type is GRPCLB, ServerName should be the name of the remote load
+    // balancer, not the name of the backend.
+    ServerName string
+    // Metadata is the information associated with Addr, which may be used
+    // to make load balancing decision.
+    Metadata interface{}
+}
+Address represents a server the client connects to. This is the EXPERIMENTAL API and may be changed or extended in the future.
+```
 
 ## 服务发现
 
