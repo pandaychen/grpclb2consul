@@ -7,29 +7,29 @@ import (
 	"encoding/json"
 	"fmt"
 	//"google.golang.org/grpc/grpclog"
-	"google.golang.org/grpc/resolver"
-	"sync"
-	"go.uber.org/zap"
 	consulapi "github.com/hashicorp/consul/api"
 	consulwatcher "github.com/hashicorp/consul/api/watch"
+	"go.uber.org/zap"
+	"google.golang.org/grpc/resolver"
+	"sync"
 )
 
-const CHANNEL_SIZE= 64
+const CHANNEL_SIZE = 64
 
 type ConsulWatcher struct {
-	ServiceName string
-	ConsulConf  *consulapi.Config		//CONSUL agent address
-	ConsulWplan          *consulwatcher.Plan
-	Ctx         context.Context
-	Cancel      context.CancelFunc
+	ServiceName     string
+	ConsulConf      *consulapi.Config //CONSUL agent address
+	ConsulWplan     *consulwatcher.Plan
+	Ctx             context.Context
+	Cancel          context.CancelFunc
 	SyncWg          sync.WaitGroup
-	ResovleAddrsOld       []resolver.Address
-	AddrsChannel   			chan []resolver.Address
-	Logger    *zap.Logger
-	sync.RWMutex		//LOCK
+	ResovleAddrsOld []resolver.Address
+	AddrsChannel    chan []resolver.Address
+	Logger          *zap.Logger
+	sync.RWMutex    //LOCK
 }
 
-func NewConsulWatcher(iconf *consulapi.Config,serviceName string) *ConsulWatcher {
+func NewConsulWatcher(iconf *consulapi.Config, serviceName string, zlogger *zap.Logger) *ConsulWatcher {
 	watcherplan, err := consulwatcher.Parse(map[string]interface{}{
 		"type":    "service",
 		"service": serviceName,
@@ -40,10 +40,11 @@ func NewConsulWatcher(iconf *consulapi.Config,serviceName string) *ConsulWatcher
 	}
 
 	w := &ConsulWatcher{
-		ServiceName: serviceName,
-		ConsulWplan:          watcherplan,
-		ConsulConf:  iconf,
-		AddrsChannel:   make(chan []resolver.Address, CHANNEL_SIZE),	//创建notify channel
+		ServiceName:  serviceName,
+		ConsulWplan:  watcherplan,
+		ConsulConf:   iconf,
+		AddrsChannel: make(chan []resolver.Address, CHANNEL_SIZE), //创建notify channel
+		Logger:       zlogger,
 	}
 	watcherplan.Handler = w.WatcherHandler
 
@@ -51,15 +52,14 @@ func NewConsulWatcher(iconf *consulapi.Config,serviceName string) *ConsulWatcher
 }
 
 func (w *ConsulWatcher) Close() {
-	defer 	w.SyncWg.Wait()
+	defer w.SyncWg.Wait()
 	w.ConsulWplan.Stop()
 }
- 
+
 func (w *ConsulWatcher) Watch() chan []resolver.Address {
 	go w.ConsulWplan.RunWithConfig(w.ConsulConf.Address, w.ConsulConf)
 	return w.AddrsChannel
 }
-
 
 //传递给workplan的函数
 func (w *ConsulWatcher) WatcherHandler(index uint64, cbdata interface{}) {
@@ -68,7 +68,7 @@ func (w *ConsulWatcher) WatcherHandler(index uint64, cbdata interface{}) {
 		w.Logger.Error("Get watcher callback data error")
 		return
 	}
-	newaddrslist := make([]resolver.Address,0)
+	newaddrslist := make([]resolver.Address, 0)
 
 	//top-level
 	for _, entry := range srventrie_list {
@@ -76,22 +76,22 @@ func (w *ConsulWatcher) WatcherHandler(index uint64, cbdata interface{}) {
 			//check和entry都是从ServiceEntry中获取
 			if check.ServiceID == entry.Service.ID {
 				//指定serviceName下的判断
-				if consulapi.HealthPassing ==  check.Status {
-					w.Logger.Info("Get Server Node",zap.String("serip", entry.Service.Address),zap.Int("port",entry.Service.Port))
+				if consulapi.HealthPassing == check.Status {
+					w.Logger.Info("Get Server Node", zap.String("serip", entry.Service.Address), zap.Int("port", entry.Service.Port))
 					addr := fmt.Sprintf("%s:%d", entry.Service.Address, entry.Service.Port)
-					metadata := map[string]string{}
+					metadata := make(map[string]interface{})
 					if len(entry.Service.Tags) > 0 {
 						err := json.Unmarshal([]byte(entry.Service.Tags[0]), &metadata)
 						if err != nil {
-							w.Logger.Error("Parse metadata error",zap.String("errmsg", err.Error()))
+							w.Logger.Error("Parse metadata error", zap.String("errmsg", err.Error()))
 						}
 					}
-					//解析得到我们的server+port
-					newaddrslist = append(newaddrslist, resolver.Address{Addr: addr, Metadata: &metadata/*interface{}*/})
+					//server+port传递给Resovler
+					newaddrslist = append(newaddrslist, resolver.Address{Addr: addr, Metadata: &metadata /*interface{}*/})
 				}
 				break
-			}else{
-				w.Logger.Error("Unknown Service ID:",zap.String("check.SrvID",check.ServiceID),zap.String("entry.Service.ID",entry.Service.ID))
+			} else {
+				w.Logger.Error("Unknown Service ID:", zap.String("check.SrvID", check.ServiceID), zap.String("entry.Service.ID", entry.Service.ID))
 			}
 		}
 	}
@@ -113,7 +113,7 @@ func (w *ConsulWatcher) NotifyAddresses(in []resolver.Address) []resolver.Addres
 }
 
 //high-performance
-func isSameAddrs(addrs1, addrs2 []resolver.Address) bool  {
+func isSameAddrs(addrs1, addrs2 []resolver.Address) bool {
 	if len(addrs1) != len(addrs2) {
 		return false
 	}
@@ -130,4 +130,8 @@ func isSameAddrs(addrs1, addrs2 []resolver.Address) bool  {
 		}
 	}
 	return true
+}
+
+func main() {
+
 }

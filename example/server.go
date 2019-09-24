@@ -78,7 +78,7 @@ func (cs *ConsulServer) GracefulStop() {
 
 // 业务逻辑
 func (cs *ConsulServer) Say(ctx context.Context, req *proto.SayReq) (*proto.SayResp, error) {
-	text := "Hello " + req.Content + "Current Server Nodeid:" + cs.NodeId
+	text := "Hello " + req.Content 
 	log.Println(text)
 	return &proto.SayResp{Content: text}, nil
 }

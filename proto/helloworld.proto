@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package proto;
+
+message SayReq {
+    string content = 1;
+}
+
+message SayResp {
+    string content = 1;
+}
+
+message AddIntNumsRequest {
+    int64 a = 1;
+    int64 b = 2;
+}
+
+message AddIntNumsResponse {
+    int64 result = 1;
+    string err = 2;
+}
+
+service Test{
+    rpc Say(SayReq) returns (SayResp);
+    rpc AddService(AddIntNumsRequest) returns (AddIntNumsResponse);
+}
