@@ -34,6 +34,8 @@ type Address struct {
 Address represents a server the client connects to. This is the EXPERIMENTAL API and may be changed or extended in the future.
 ```
 
+
+
 ## 服务发现
 
 
@@ -67,6 +69,31 @@ consul agent -dev
       Cluster Addr: 127.0.0.1 (LAN: 8301, WAN: 8302)
            Encrypt: Gossip: false, TLS-Outgoing: false, TLS-Incoming: false
 (以下省略)
+```
+
+- 注册服务
+
+```
+使用curl http://127.0.01:8500/v1/agent/services 查询服务
+
+{
+    "helloconsul-127.0.0.1-8001": {
+        "Kind": "",
+        "ID": "helloconsul-127.0.0.1-8001",
+        "Service": "helloconsul",
+        "Tags": [
+            "{\"UniqID\":\"helloconsul-127.0.0.1-8001\",\"ServiceName\":\"helloconsul\",\"Ttl\":20,\"Ip\":\"127.0.0.1\",\"Port\":8001,\"Version\":\"v1.0\",\"HostName\":\"VM_0_7_centos\",\"Weight\":1,\"Metadata\":{\"othermsg\":\"none\"}}"
+        ],
+        "Meta": {},
+        "Port": 8001,
+        "Address": "127.0.0.1",
+        "EnableTagOverride": false,
+        "CreateIndex": 0,
+        "ModifyIndex": 0,
+        "ProxyDestination": "",
+        "Connect": null
+    }
+}
 ```
 
 ## discuss
