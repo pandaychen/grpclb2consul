@@ -114,7 +114,6 @@ func (c *ConsulRegistry) RegisterWithHealthCheckTTL() error {
 
 	//TTL-续期
 	TTLTicker := time.NewTicker(time.Duration(c.GeneNodeData.Ttl) * time.Second / 2)
-	//重新注册(?)
 	RenewRegisterTicker := time.NewTicker(time.Minute)
 
 	for {
@@ -184,7 +183,6 @@ func (c *ConsulRegistry) RegisterWithHealthCheckGRPC() error {
 
 	//TTL-续期
 	TTLTicker := time.NewTicker(time.Duration(c.GeneNodeData.Ttl) * time.Second / 5)
-	//重新注册(?)
 	RenewRegisterTicker := time.NewTicker(time.Minute)
 
 	for {
