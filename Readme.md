@@ -12,7 +12,15 @@
 -	resolver包,借助于GRPC的resolver/balancer包提供的接口,支持自定义的负载均衡算法</br>
 -	naming包,借助于naming包的Next()方法,只能实现GRPC默认的round-robin方式</br>
 
-具体实现的思路如下:
+不管采用哪种方式,都是实现地址解析和更新策略(GRPC默认提供了DNS方式),两种方式实现的思路如下:
+
+    -	resolver包
+    -	naming包
+通过实现 naming.Resolver 和 naming.Watcher 接口来支持
+```
+naming.Resolver: 实现地址解析
+naming.Watcher: 实现节点的变更,添加/删除
+```
 
 ## 服务注册
 grpc-resovler包的Address结构,注意看其中的Metadata,可以在其中放入一些与LB特性相关的数据(如权重等),用于我们实现LB算法
