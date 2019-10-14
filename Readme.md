@@ -59,6 +59,38 @@ Address represents a server the client connects to. This is the EXPERIMENTAL API
 
 ## 服务访问
 
+##	健康检查
+健康检查在Consul实现服务发现中十分重要，Agent会根据健康检查中设定的方法去检查服务的存活情况，一旦健康检查不通过，Consul就会把此服务标识为不可访问（需要在Resovler中处理变化）。本例中实现了三种健康检查的方式：<br><br>
+1.	TTL（TimeToLive）方式<br>
+该方式有点类似于Etcd的租约方式，应用服务需要自行实现定时上报心跳（TTL）的逻辑<br>
+2.	HTTP方式<br>
+该方式需要在服务中新启动一个http服务（一般新启动一个routine来完成），Agent定时向该接口发起HTTP请求，来完成服务的健康检查<br>
+3.	RPC方式<br>
+该方式需要RPC服务中，实现标准的GRPC健康检查的方法[GRPC-Health-check](https://github.com/grpc/grpc/blob/master/doc/health-checking.md) ，如下面的Check和Wwatch两个方法：</br>
+```
+syntax = "proto3";
+
+package grpc.health.v1;
+
+message HealthCheckRequest {
+  string service = 1;
+}
+
+message HealthCheckResponse {
+  enum ServingStatus {
+    UNKNOWN = 0;
+    SERVING = 1;
+    NOT_SERVING = 2;
+  }
+  ServingStatus status = 1;
+}
+
+service Health {
+  rpc Check(HealthCheckRequest) returns (HealthCheckResponse);
+
+  rpc Watch(HealthCheckRequest) returns (stream HealthCheckResponse);
+}
+```
 
 
 ## 测试
