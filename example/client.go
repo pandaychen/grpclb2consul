@@ -4,21 +4,20 @@ package main
 //author:pandaychen
 
 import (
-	"../enums"
-	"../utils"
-	consulresovler "../consul_discovery"
-	proto "../proto"
 	"fmt"
-	consulapi "github.com/hashicorp/consul/api"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"gopkg.in/urfave/cli.v1"
 	"log"
 	"os"
 	"time"
+
+	consulapi "github.com/hashicorp/consul/api"
+	consulresovler "github.com/pandaychen/grpclb2consul/consul_discovery"
+	"github.com/pandaychen/grpclb2consul/enums"
+	proto "github.com/pandaychen/grpclb2consul/proto"
+	"github.com/pandaychen/grpclb2consul/utils"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"gopkg.in/urfave/cli.v1"
 )
-
-
 
 func RpcClientStart(consul_addrstr, servicename, lbtype string) {
 	consulresovler.RegisterResolver(string(enums.RT_CONSUL), &consulapi.Config{Address: consul_addrstr}, servicename)

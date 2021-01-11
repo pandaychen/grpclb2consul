@@ -4,27 +4,30 @@ package main
 //author:pandaychen
 
 import (
-	//"../balancer"
-	consulreg "../consul_discovery"
-	"../enums"
-	proto "../proto"
-	"../utils"
+	//"github.com/pandaychen/grpclb2consul/balancer"
 	"fmt"
-	consulapi "github.com/hashicorp/consul/api"
-	"go.uber.org/zap"
-	"golang.org/x/net/context"
-	"google.golang.org/grpc"
-	"google.golang.org/grpc/health/grpc_health_v1"
-	"gopkg.in/urfave/cli.v1"
 	"log"
 	"net"
 	"os"
 	"os/signal"
 	"sync"
 	"syscall"
+
+	consulapi "github.com/hashicorp/consul/api"
+	consulreg "github.com/pandaychen/grpclb2consul/consul_discovery"
+	"github.com/pandaychen/grpclb2consul/enums"
+	proto "github.com/pandaychen/grpclb2consul/proto"
+	"github.com/pandaychen/grpclb2consul/utils"
+	"go.uber.org/zap"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/health/grpc_health_v1"
+	"gopkg.in/urfave/cli.v1"
+
 	//"time"
-	hc "../healthcheck"
 	"errors"
+
+	hc "../healthcheck"
 )
 
 type ConsulServer struct {
@@ -78,7 +81,7 @@ func (cs *ConsulServer) GracefulStop() {
 
 // 业务逻辑
 func (cs *ConsulServer) Say(ctx context.Context, req *proto.SayReq) (*proto.SayResp, error) {
-	text := "Hello " + req.Content 
+	text := "Hello " + req.Content
 	log.Println(text)
 	return &proto.SayResp{Content: text}, nil
 }
@@ -135,8 +138,8 @@ func RpcServerStart(servernode, consul_addrstr, bind_addr string, port, weight i
 	gnode.Ip = bind_addr
 	gnode.Port = port
 	gnode.Version = server_version
-	hostname,_:=os.Hostname()
-	gnode.HostName=hostname
+	hostname, _ := os.Hostname()
+	gnode.HostName = hostname
 	gnode.Weight = weight
 	gnode.Metadata = map[string]string{"othermsg": "none"}
 
