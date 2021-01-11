@@ -3,7 +3,7 @@ package consul_discovery
 //consul resovler(CLIENT)
 
 import (
-	"../utils"
+	"github.com/pandaychen/grpclb2consul/utils"
 	consulapi "github.com/hashicorp/consul/api"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/resolver"
