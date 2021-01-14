@@ -27,7 +27,7 @@ import (
 	//"time"
 	"errors"
 
-	hc "../healthcheck"
+	hc "github.com/pandaychen/grpclb2consul/healthcheck"
 )
 
 type ConsulServer struct {

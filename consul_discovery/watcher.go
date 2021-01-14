@@ -46,6 +46,8 @@ func NewConsulWatcher(iconf *consulapi.Config, serviceName string, zlogger *zap.
 		AddrsChannel: make(chan []resolver.Address, CHANNEL_SIZE), //创建notify channel
 		Logger:       zlogger,
 	}
+
+	//实现consul-watch的逻辑
 	watcherplan.Handler = w.WatcherHandler
 
 	return w
@@ -132,6 +134,3 @@ func isSameAddrs(addrs1, addrs2 []resolver.Address) bool {
 	return true
 }
 
-func main() {
-
-}
