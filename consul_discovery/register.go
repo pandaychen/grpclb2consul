@@ -6,8 +6,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	consulapi "github.com/hashicorp/consul/api"
 	"go.uber.org/zap"
+
 	//"google.golang.org/grpc/grpclog"
 	"time"
 )

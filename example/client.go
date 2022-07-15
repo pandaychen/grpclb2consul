@@ -14,9 +14,9 @@ import (
 	"github.com/pandaychen/grpclb2consul/enums"
 	proto "github.com/pandaychen/grpclb2consul/proto"
 	"github.com/pandaychen/grpclb2consul/utils"
+	"github.com/urfave/cli/v2"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"gopkg.in/urfave/cli.v1"
 )
 
 func RpcClientStart(consul_addrstr, servicename, lbtype string) {
@@ -57,19 +57,19 @@ func CmdRun() {
 	app.Usage = ""
 	app.Version = "1.0.0"
 	app.Flags = []cli.Flag{
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:        "consul,cs",
 			Value:       "http://127.0.0.1:8500",
 			Usage:       "Consul Agent address list",
 			Destination: &consul_addrstr,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:        "service name,sn",
 			Value:       "helloconsul",
 			Usage:       "service name",
 			Destination: &servicename,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:        "balancer ,lb",
 			Value:       "rr",
 			Usage:       "load balancer[rr|random|consistent]",
@@ -88,12 +88,12 @@ func CmdRun() {
 		return nil
 	}
 
-	cli.HelpFlag = cli.BoolFlag{
+	cli.HelpFlag = &cli.BoolFlag{
 		Name:  "help, h",
 		Usage: "Help!Help!",
 	}
 
-	cli.VersionFlag = cli.BoolFlag{
+	cli.VersionFlag = &cli.BoolFlag{
 		Name:  "print-version, v",
 		Usage: "print version",
 	}

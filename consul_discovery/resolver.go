@@ -3,11 +3,12 @@ package consul_discovery
 //consul resovler(CLIENT)
 
 import (
-	"github.com/pandaychen/grpclb2consul/utils"
+	"sync"
+
 	consulapi "github.com/hashicorp/consul/api"
+	"github.com/pandaychen/grpclb2consul/utils"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/resolver"
-	"sync"
 	//"time"
 )
 
@@ -34,7 +35,7 @@ func RegisterResolver(scheme string, consulConf *consulapi.Config, srvName strin
 }
 
 //resovler build
-func (r *ConsulResolver) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOption) (resolver.Resolver, error) {
+func (r *ConsulResolver) Build(target resolver.Target, cc resolver.ClientConn, opts resolver.BuildOptions) (resolver.Resolver, error) {
 	//construct a resolver
 	r.ClientConn = cc
 	r.Watcher = NewConsulWatcher(r.ConsulConf, r.ServiceName, r.Logger)
@@ -53,7 +54,7 @@ func (r *ConsulResolver) startRecvDynamicAddrlist() {
 	}
 }
 
-func (r *ConsulResolver) ResolveNow(o resolver.ResolveNowOption) {
+func (r *ConsulResolver) ResolveNow(o resolver.ResolveNowOptions) {
 	r.Logger.Info("ResolveNow")
 }
 

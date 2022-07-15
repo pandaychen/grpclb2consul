@@ -6,12 +6,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+
 	//"google.golang.org/grpc/grpclog"
+	"sync"
+
 	consulapi "github.com/hashicorp/consul/api"
 	consulwatcher "github.com/hashicorp/consul/api/watch"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/resolver"
-	"sync"
 )
 
 const CHANNEL_SIZE = 64
@@ -133,4 +135,3 @@ func isSameAddrs(addrs1, addrs2 []resolver.Address) bool {
 	}
 	return true
 }
-

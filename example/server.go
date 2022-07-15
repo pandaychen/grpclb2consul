@@ -18,11 +18,11 @@ import (
 	"github.com/pandaychen/grpclb2consul/enums"
 	proto "github.com/pandaychen/grpclb2consul/proto"
 	"github.com/pandaychen/grpclb2consul/utils"
+	"github.com/urfave/cli/v2"
 	"go.uber.org/zap"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
-	"gopkg.in/urfave/cli.v1"
 
 	//"time"
 	"errors"
@@ -181,48 +181,48 @@ func CmdRun() {
 	app.Usage = "a simple grpc server,use consul as service registy"
 	app.Version = "1.0.0"
 	app.Flags = []cli.Flag{
-		cli.IntFlag{
+		&cli.IntFlag{
 			Name:  "port, p",
 			Value: 8001,
 			Usage: "listening port",
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:        "bind,b",
 			Value:       "127.0.0.1",
 			Usage:       "Bind Addr",
 			Destination: &bind_addr,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:        "nodeid,n",
 			Value:       "snode0",
 			Usage:       "Service name prefix to consul",
 			Destination: &servernode,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:        "consul,cs",
 			Value:       "http://127.0.0.1:8500",
 			Usage:       "Consul Agent address list",
 			Destination: &consul_addrstr,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:        "service name,sn",
 			Value:       "helloconsul",
 			Usage:       "service name",
 			Destination: &servicename,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:        "check type,ct",
 			Value:       "ttl",
 			Usage:       "healthy check type[ttl|grpc|http]",
 			Destination: &checktype,
 		},
-		cli.StringFlag{
+		&cli.StringFlag{
 			Name:        "version,sv",
 			Value:       "v1.0",
 			Usage:       "service version",
 			Destination: &server_version,
 		},
-		cli.IntFlag{
+		&cli.IntFlag{
 			Name:  "weight, w",
 			Value: 1,
 			Usage: "service node weight",
@@ -242,12 +242,12 @@ func CmdRun() {
 		return nil
 	}
 
-	cli.HelpFlag = cli.BoolFlag{
+	cli.HelpFlag = &cli.BoolFlag{
 		Name:  "help, h",
 		Usage: "Help!Help!",
 	}
 
-	cli.VersionFlag = cli.BoolFlag{
+	cli.VersionFlag = &cli.BoolFlag{
 		Name:  "print-version, v",
 		Usage: "print version",
 	}
