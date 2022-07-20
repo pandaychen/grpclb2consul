@@ -29,21 +29,22 @@ func RpcClientStart(consul_addrstr, servicename, lbtype string) {
 	defer c.Close()
 
 	client := proto.NewTestClient(c)
-	for i := 0; i < 100000; i++ {
-
+	for i := 0; i < 200; i++ {
 		resp, err := client.Say(context.Background(), &proto.SayReq{Content: "round robin"})
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 		fmt.Println(resp.Content)
-		resp2, err := client.AddService(context.Background(), &proto.AddIntNumsRequest{A: int64(i), B: int64(i)})
-		if err != nil {
-			log.Println(err)
-			continue
-		}
+		/*
+			resp2, err := client.AddService(context.Background(), &proto.AddIntNumsRequest{A: int64(i), B: int64(i)})
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+			fmt.Println(resp2.Result, resp2.Err)
+		*/
 		time.Sleep(time.Second)
-		fmt.Println(resp2.Result, resp2.Err)
 	}
 }
 

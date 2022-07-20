@@ -10,8 +10,12 @@ import (
 	consulapi "github.com/hashicorp/consul/api"
 	"go.uber.org/zap"
 
-	//"google.golang.org/grpc/grpclog"
 	"time"
+)
+
+var (
+	DefaultDeregisterCriticalServiceAfter = "1m"
+	DefaultCheckInterval                  = "3s"
 )
 
 //register common node info
@@ -27,6 +31,7 @@ type GenericServerNodeValue struct {
 	HostName string            // 主机名称
 	Weight   int               // 服务权重
 	Metadata map[string]string //服务端与客户端可以约定相关格式
+	//Metadata metadata.MD //使用通用结构
 }
 
 type ConsulRegistry struct {
@@ -84,13 +89,12 @@ func (c *ConsulRegistry) RegisterWithHealthCheckTTL() error {
 	}
 	tags := make([]string, 0)
 	tags = append(tags, string(metadata))
-	fmt.Println(c.GeneNodeData)
+
 	registerfunc := func() error {
 		healthcheck := &consulapi.AgentServiceCheck{
-			//TTL:                            fmt.Sprintf("%ds", 10),
 			TTL:                            fmt.Sprintf("%ds", c.GeneNodeData.Ttl),
 			Status:                         consulapi.HealthPassing,
-			DeregisterCriticalServiceAfter: "1m",
+			DeregisterCriticalServiceAfter: DefaultDeregisterCriticalServiceAfter,
 		}
 		fmt.Println(c.GeneNodeData.ServiceName)
 		crs := &consulapi.AgentServiceRegistration{
@@ -102,7 +106,7 @@ func (c *ConsulRegistry) RegisterWithHealthCheckTTL() error {
 			Check:   healthcheck}
 		err := c.ConsulAgent.Agent().ServiceRegister(crs) //单例模式
 		if err != nil {
-			//c.Logger.Error("Register with consul error", zap.String("errmsg", err.Error()))
+			c.Logger.Error("Register with consul error", zap.String("errmsg", err.Error()))
 			return fmt.Errorf("Register with consul error: %s\n", err.Error())
 		}
 		return nil
@@ -143,23 +147,19 @@ func (c *ConsulRegistry) RegisterWithHealthCheckTTL() error {
 	return nil
 }
 
+//使用GRPC健康检查方式注册
 func (c *ConsulRegistry) RegisterWithHealthCheckGRPC() error {
-	metadata, err := json.Marshal(c.GeneNodeData)
-	if err != nil {
-		c.Logger.Error("JSON marshal error", zap.String("errmsg", err.Error()))
-		return err
-	}
-	tags := make([]string, 0)
-	tags = append(tags, string(metadata))
+	var (
+		err error
+	)
+	tags := []string{"tag1", "tag2"}
 
 	registerfunc := func() error {
 		//健康检查
 		healthcheck := &consulapi.AgentServiceCheck{
-			//Interval: c.Interval.String(),                            // 健康检查间隔
-			Interval: "3s",
-			GRPC:     fmt.Sprintf("%s:%d/%s", c.GeneNodeData.Ip, c.GeneNodeData.Port, "check111"), // grpc 支持，执行健康检查的地址，service 会传到 Health.Check 函数中
-			//DeregisterCriticalServiceAfter: r.DeregisterCriticalServiceAfter.String(), // 注销时间，相当于过期时间
-			DeregisterCriticalServiceAfter: "1m",
+			Interval:                       DefaultCheckInterval,                                                                        // 健康检查间隔                                            // 健康检查间隔
+			GRPC:                           fmt.Sprintf("%s:%d/%s", c.GeneNodeData.Ip, c.GeneNodeData.Port, c.GeneNodeData.ServiceName), // grpc 支持，执行健康检查的地址，service 会传到 Health.Check 函数中
+			DeregisterCriticalServiceAfter: DefaultDeregisterCriticalServiceAfter,                                                       // 注销时间，相当于过期时间
 		}
 
 		crs := &consulapi.AgentServiceRegistration{
@@ -168,10 +168,11 @@ func (c *ConsulRegistry) RegisterWithHealthCheckGRPC() error {
 			Address: c.GeneNodeData.Ip,   // 服务 IP
 			Port:    c.GeneNodeData.Port, // 服务端口
 			Tags:    tags,                // tags，可以为空([]string{})
+			Meta:    c.GeneNodeData.Metadata,
 			Check:   healthcheck}
 		err := c.ConsulAgent.Agent().ServiceRegister(crs) //单例模式
 		if err != nil {
-			//c.Logger.Error("Register with consul error", zap.String("errmsg", err.Error()))
+			c.Logger.Error("Register with consul error", zap.String("errmsg", err.Error()))
 			return fmt.Errorf("Register with consul error: %s\n", err.Error())
 		}
 		return nil
@@ -194,13 +195,6 @@ func (c *ConsulRegistry) RegisterWithHealthCheckGRPC() error {
 			RenewRegisterTicker.Stop()
 			c.ConsulAgent.Agent().ServiceDeregister(c.GeneNodeData.UniqID) //cancel service
 			return nil
-		case <-TTLTicker.C:
-			continue
-			c.Logger.Error("Register with consul TTL", zap.String("errmsg", c.HeadlthCheckId))
-			err := c.ConsulAgent.Agent().PassTTL(c.HeadlthCheckId, "")
-			if err != nil {
-				c.Logger.Error("Register with consul TTL(health-check) error", zap.String("errmsg", err.Error()))
-			}
 		case <-RenewRegisterTicker.C:
 			err = registerfunc() //因为这里采用了定时上报的方式，所以health check中设置的是TTL模式，除了TTL，还有tcp-check，grpc-check等方式
 			if err != nil {

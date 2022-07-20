@@ -4,7 +4,6 @@ package main
 //author:pandaychen
 
 import (
-	//"github.com/pandaychen/grpclb2consul/balancer"
 	"fmt"
 	"log"
 	"net"
@@ -24,8 +23,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health/grpc_health_v1"
 
-	//"time"
-	"errors"
+	"github.com/pkg/errors"
 
 	hc "github.com/pandaychen/grpclb2consul/healthcheck"
 )
@@ -94,7 +92,6 @@ func (cs *ConsulServer) AddService(ctx context.Context, request *proto.AddIntNum
 	*/
 	response := &proto.AddIntNumsResponse{
 		Result: request.A + request.B,
-		Err:    "",
 	}
 	return response, nil
 }
@@ -121,7 +118,7 @@ func (cs *ConsulServer) GoServer() {
 	}()
 }
 
-/////END of consul server wrapper////
+//END of consul server wrapper
 
 func RpcServerStart(servernode, consul_addrstr, bind_addr string, port, weight int, servicename, checktype, server_version string) {
 	consulconf := &consulapi.Config{
@@ -130,10 +127,8 @@ func RpcServerStart(servernode, consul_addrstr, bind_addr string, port, weight i
 	zlogger, _ := utils.ZapLoggerInit(servicename)
 
 	gnode := new(consulreg.GenericServerNodeValue)
-	gnode.UniqID = fmt.Sprintf("%v-%v-%v", servicename, bind_addr, port) // 服务节点的名称
-	//fmt.Println("id=", gnode.UniqID)
-	gnode.ServiceName = servicename
-	//fmt.Println(servicename)
+	gnode.UniqID = fmt.Sprintf("%v-%v-%v", servicename, bind_addr, port) // 服务节点的名称（唯一ID）
+	gnode.ServiceName = servicename                                      //重要
 	gnode.Ttl = 20
 	gnode.Ip = bind_addr
 	gnode.Port = port
@@ -230,8 +225,6 @@ func CmdRun() {
 	}
 
 	app.Action = func(c *cli.Context) error {
-		//fmt.Println(c.String("nodeid"), c.Int("port"))
-		//fmt.Println(servernode, consul_addrstr)
 		RpcServerStart(servernode, consul_addrstr, bind_addr, c.Int("port"), c.Int("weight"), servicename, checktype, server_version)
 		return nil
 	}

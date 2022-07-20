@@ -4,7 +4,6 @@ package consul_discovery
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 
 	//"google.golang.org/grpc/grpclog"
@@ -28,7 +27,7 @@ type ConsulWatcher struct {
 	ResovleAddrsOld []resolver.Address
 	AddrsChannel    chan []resolver.Address
 	Logger          *zap.Logger
-	sync.RWMutex    //LOCK
+	sync.RWMutex
 }
 
 func NewConsulWatcher(iconf *consulapi.Config, serviceName string, zlogger *zap.Logger) *ConsulWatcher {
@@ -83,15 +82,8 @@ func (w *ConsulWatcher) WatcherHandler(index uint64, cbdata interface{}) {
 				if consulapi.HealthPassing == check.Status {
 					w.Logger.Info("Get Server Node", zap.String("serip", entry.Service.Address), zap.Int("port", entry.Service.Port))
 					addr := fmt.Sprintf("%s:%d", entry.Service.Address, entry.Service.Port)
-					metadata := make(map[string]interface{})
-					if len(entry.Service.Tags) > 0 {
-						err := json.Unmarshal([]byte(entry.Service.Tags[0]), &metadata)
-						if err != nil {
-							w.Logger.Error("Parse metadata error", zap.String("errmsg", err.Error()))
-						}
-					}
 					//server+port传递给Resovler
-					newaddrslist = append(newaddrslist, resolver.Address{Addr: addr, Metadata: &metadata /*interface{}*/})
+					newaddrslist = append(newaddrslist, resolver.Address{Addr: addr, Metadata: &entry.Node.Meta /*interface{}*/})
 				}
 				break
 			} else {

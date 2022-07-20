@@ -1,5 +1,7 @@
 package healthcheck
 
+//实现grpc服务的健康检查
+
 import (
 	"context"
 	"fmt"
@@ -48,7 +50,7 @@ func (h *HealthyCheck) Check(ctx context.Context, in *pb.HealthCheckRequest) (*p
 		}, nil
 	*/
 	//more check method/logic could be add
-	fmt.Println("call health check", in)
+	fmt.Println("call health check", in.Service)
 	return &pb.HealthCheckResponse{Status: pb.HealthCheckResponse_SERVING}, nil
 	//return &pb.HealthCheckResponse{Status: pb.HealthCheckResponse_NOT_SERVING }, nil
 }
