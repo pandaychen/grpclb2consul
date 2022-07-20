@@ -1,29 +1,27 @@
-# grpclb2consul 
-一个grpc的负载均衡解析器实现(基于CONSUL)
+# grpclb2consul
+一个 gRPC 的负载均衡解析器实现 (基于 Consul)
 
-# 说明
+## 说明
 
-关于GRPC-LB的实现，可以参考下比较基础的文章：</br>
-[GRPC服务发现&负载均衡](https://segmentfault.com/a/1190000008672912) </br>
+关于 GRPC-LB 的实现，可以参考下比较基础的文章：</br>
+[GRPC 服务发现 & 负载均衡](https://segmentfault.com/a/1190000008672912) </br>
 [gRPC Load Balancing](https://grpc.io/blog/loadbalancing/) </br>
 
-本项目借助于GRPC+CONSUL实现了基础的服务注册与服务发现,实现了如下两种调用方式：</br>
+本项目借助于 gRPC+Consul 实现了基础的服务注册与服务发现, 实现了如下两种调用方式：</br>
 
--	resolver包,借助于GRPC的resolver/balancer包提供的接口,支持自定义的负载均衡算法</br>
--	naming包,借助于naming包的Next()方法,只能实现GRPC默认的round-robin方式</br>
+-	resolver 包, 借助于 GRPC 的 resolver/balancer 包提供的接口, 支持自定义的负载均衡算法 </br>
+-	naming 包, 借助于 naming 包的 `Next()` 方法, 只能实现 gRPC 默认的 round-robin 方式 </br>
 
-不管采用哪种方式,其本质都是实现地址解析和更新策略(GRPC默认提供了DNS方式),两种方式实现的思路如下:
+不管采用哪种方式, 其本质都是实现地址解析和更新策略 (gRPC 默认提供了 DNS 方式), 两种方式实现的思路如下:
 
--	naming包
-通过实现 naming.Resolver 和 naming.Watcher 接口来支持
-```
-naming.Resolver: 实现地址解析
-naming.Watcher: 实现节点的变更,添加/删除
-```
+####  naming 包
+通过实现 `naming.Resolver` 和 `naming.Watcher` 接口来支持
+- `naming.Resolver`：实现地址解析
+- `naming.Watcher`：实现节点的变更, 添加 / 删除
 
 ## 服务注册
-grpc-resovler包的Address结构,注意看其中的Metadata,可以在其中放入一些与LB特性相关的数据(如权重等),用于我们实现LB算法
-```
+grpc-resovler 包的 Address 结构, 注意看其中的 Metadata, 可以在其中放入一些与 LB 特性相关的数据 (如权重等), 用于我们实现 LB 算法
+```golang
 type Address struct {
     // Addr is the server address on which a connection will be established.
     Addr string
@@ -42,32 +40,50 @@ Address represents a server the client connects to. This is the EXPERIMENTAL API
 ```
 
 
-
 ## 服务发现
 
+####  resolver
+resolver[文档](https://pkg.go.dev/google.golang.org/grpc/resolver)：
+
+```golang
+type State struct {
+	// Addresses is the latest set of resolved addresses for the target.
+	Addresses []Address //address 为数组
+
+	// ServiceConfig contains the result from parsing the latest service
+	// config.  If it is nil, it indicates no service config is present or the
+	// resolver does not provide service configs.
+	ServiceConfig *serviceconfig.ParseResult
+
+	// Attributes contains arbitrary data about the resolver intended for
+	// consumption by the load balancing policy.
+	Attributes *attributes.Attributes
+}
+```
 
 ## 负载均衡算法
 
-- 带权重的roundrobin算法 
+- 带权重的 roundrobin 算法
 
-- random算法
+- random 算法
 
-- ketama算法
+- ketama 算法
 
-- P2C算法
+- P2C 算法
 
 
 ## 服务访问
 
 ##	健康检查
-健康检查在Consul实现服务发现中十分重要，Agent会根据健康检查中设定的方法去检查服务的存活情况，一旦健康检查不通过，Consul就会把此服务标识为不可访问（需要在Resovler中处理变化）。本例中实现了三种健康检查的方式：<br><br>
-1.	TTL（TimeToLive）方式<br>
-该方式有点类似于Etcd的租约方式，应用服务需要自行实现定时上报心跳（TTL）的逻辑<br>
-2.	HTTP方式<br>
-该方式需要在服务中新启动一个http服务（一般新启动一个routine来完成），Agent定时向该接口发起HTTP请求，来完成服务的健康检查<br>
-3.	RPC方式<br>
-该方式需要RPC服务中，实现标准的GRPC健康检查的方法[GRPC-Health-check](https://github.com/grpc/grpc/blob/master/doc/health-checking.md) ，如下面的Check和Wwatch两个方法：</br>
-```
+健康检查在 Consul 实现服务发现中十分重要，Agent 会根据健康检查中设定的方法去检查服务的存活情况，一旦健康检查不通过，Consul 就会把此服务标识为不可访问（需要在 Resovler 中处理变化）。本例中实现了三种健康检查的方式：<br><br>
+1.	TTL（TimeToLive）方式 <br>
+该方式有点类似于 Etcd 的租约方式，应用服务需要自行实现定时上报心跳（TTL）的逻辑 <br>
+2.	HTTP 方式 <br>
+该方式需要在服务中新启动一个 http 服务（一般新启动一个 routine 来完成），Agent 定时向该接口发起 HTTP 请求，来完成服务的健康检查 <br>
+3.	RPC 方式 <br>
+该方式需要 RPC 服务中，实现标准的 GRPC 健康检查的方法 [GRPC-Health-check](https://github.com/grpc/grpc/blob/master/doc/health-checking.md) ，如下面的 Check 和 Wwatch 两个方法：</br>
+
+```proto
 syntax = "proto3";
 
 package grpc.health.v1;
@@ -94,8 +110,8 @@ service Health {
 
 
 ## 测试
-1.	安装consul,开启consul的单机调试模式
-```
+1.	安装 consul, 开启 consul 的单机调试模式 <br>
+```bash
 consul agent -dev
 ==> Starting Consul agent...
 ==> Consul agent running!
@@ -110,11 +126,9 @@ consul agent -dev
 (以下省略)
 ```
 
-- 注册服务
-
-```
-使用curl http://127.0.01:8500/v1/agent/services 查询服务
-
+2、注册 / 查询服务 <br>
+使用 `curl http://127.0.01:8500/v1/agent/services` 查询服务
+```json
 {
     "helloconsul-127.0.0.1-8001": {
         "Kind": "",
